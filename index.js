@@ -3,11 +3,15 @@ var db = require('./dbconn');
 
 const express = require('express');
 const app = express();
+const cors = require('cors');
+
 const port = 3000;
 
 
-app.use(express.urlencoded({ extended: true })); // Untuk form data seperti input text dalam form
 
+app.use(cors());
+app.use(express.urlencoded({ extended: true })); // Untuk form data seperti input text dalam form
+app.use(express.json());
 
 // FUNGSI PENDUKUNG
 ///////////////////////////////////////////////////
@@ -90,52 +94,8 @@ app.post('/input_instansi', (req, res) => {
 
 
 
-app.post("/add_kegiatan", authenticateToken, async (req,res) => {
+app.post("/input_ms_keg", authenticateToken, async (req,res) => {
 
-    // Autentikasi User dulu, apakah bisa menambahkan kegiatan baru atau tidak
-
-    try{
-        const info = req.user
-        const username = info.username
-
-        
-        const { id, nama, jenis, tgl_mulai, target_selesai, koseka, target_pengdok, target_edcod, target_entri } = req.body;
-        
-
-        let status = '1'
-        if (jenis === '1'){
-            status = '3'
-        }
-
-        nothing_in_db(id, (err,hasil) => {
-            if (err){
-                console.error("Terjadi kesalahan:", err);
-                return;
-            }
-
-            if (hasil) {
-                //Push ke db
-                query = ""
-                db.query(query, (err,results) => {
-                    if (err) throw err;
-                });
-
-                res.status(201).send({
-                    msg: "Berhasil",
-                });
-            }else{
-                res.status(400).send({
-                    type : "duplicate_id",
-                    msg: "ID telah digunakan",
-                });
-            }
-        })
-    } catch(error){
-        res.status(500).send({
-            type : "Unknown_error", 
-            msg: "Register Gagal sini",
-        })
-    }
 });
 
 app.listen(port, () => {
