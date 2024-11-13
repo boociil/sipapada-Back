@@ -61,6 +61,25 @@ app.get('/get_all_instansi', (req, res) => {
     });
 });
 
+app.get('/get_all_users', (req, res) => {
+    let query = "SELECT `username`, `role`, `dinas` FROM `users`";
+    
+    db.query(query, (err, result) => {  // Ubah 'res' menjadi 'result'
+        if (err) {
+            res.status(500).send({
+                status:500,
+                msg: "Failed",
+            });
+            return;  // Tambahkan return agar eksekusi berhenti setelah error
+        }
+        
+        res.status(200).send({
+            status : 200,
+            msg: result,  // Gunakan 'result' untuk mengirim hasil query
+        });
+    });
+});
+
 // POST
 
 app.post('/input_instansi', (req, res) => {
@@ -90,6 +109,19 @@ app.post('/input_instansi', (req, res) => {
             id: result.insertId,  // Anda bisa mengirimkan ID yang baru saja dimasukkan ke dalam tabel
         });
     });
+});
+
+app.post('/login', (req,res) => {
+    const {username,password} = req.body;
+
+    // Validasi input
+    if (req.body === undefined || req.body.nama === undefined || req.body.alamat === undefined) {
+        return res.status(400).send({
+            msg: "Nama dan alamat harus diisi",
+        });
+    }
+
+
 });
 
 
