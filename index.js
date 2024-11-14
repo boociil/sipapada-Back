@@ -61,6 +61,24 @@ app.get('/get_all_instansi', (req, res) => {
     });
 });
 
+app.get('/get_all_users', (req, res) => {
+    let query = "SELECT `username`, `role`, `dinas` FROM `users`";
+    
+    db.query(query, (err, result) => {  // Ubah 'res' menjadi 'result'
+        if (err) {
+            res.status(500).send({
+                msg: "Failed",
+            });
+            return;  // Tambahkan return agar eksekusi berhenti setelah error
+        }
+        
+        res.status(200).send({
+            status : 200,
+            msg: result,  // Gunakan 'result' untuk mengirim hasil query
+        });
+    });
+});
+
 // POST
 
 app.post('/input_instansi', (req, res) => {
