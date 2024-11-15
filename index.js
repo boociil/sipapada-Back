@@ -4,6 +4,7 @@ var db = require('./dbconn');
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const path = require('path');
 
 const port = 3000;
 
@@ -12,6 +13,7 @@ const port = 3000;
 app.use(cors());
 app.use(express.urlencoded({ extended: true })); // Untuk form data seperti input text dalam form
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // FUNGSI PENDUKUNG
 ///////////////////////////////////////////////////
@@ -44,7 +46,7 @@ app.get('/', (req, res) => {
 
 
 app.get('/get_all_instansi', (req, res) => {
-    let query = "SELECT nama,alamat FROM `dinas`";
+    let query = "SELECT id,nama,alamat,alias FROM `dinas`";
     
     db.query(query, (err, result) => {  // Ubah 'res' menjadi 'result'
         if (err) {
