@@ -10,7 +10,7 @@ const jwt = require('jsonwebtoken');
 
 const port = 3000;
 
-
+const secretKey = 'babi';
 
 app.use(cors());
 app.use(express.urlencoded({ extended: true })); // Untuk form data seperti input text dalam form
@@ -105,6 +105,62 @@ app.get('/get_all_users', (req, res) => {
 
 
 // POST
+
+app.post("/login", async (req,res) => {
+
+    try {
+
+        const { username, password } = req.body;
+        
+        const query = "SELECT username,password,role,dinas FROM `users` WHERE `username`= ?;";
+        db.query(query, [username] ,(err,results) =>{
+            if (results.length === 0){
+                // Jika Kesalahan berada pada username
+                res.status(400).send({
+                    msg : "Username",
+                    accessToken : "-",
+                });
+            }else{
+                let hashed_pass = results[0].password;
+                
+                bcrypt.compare(password, hashed_pass, function(err,resultss){
+                    if (err) {
+                        // Kesalahan selama pembandingan
+                        res.status(500).send("Terjadi Kesalahan")
+                    } else {
+                        // Hasil pembandingan
+                        if (resultss) {
+                            // Informasi yang terkandung dalam token
+                            const info = {
+                                "username": results[0].username,
+                                "role": results[0].role,
+                                "dinas": results[0].dinas,
+                            }
+                            // TOKEN
+                            const token = jwt.sign(info,secretKey);
+                            
+                            res.status(200).json({
+                                status:200,
+                                msg:"Success",
+                                accessToken : token,
+                                role : results[0].role,
+                                username : info.username,
+                            })
+                           
+                            
+                        } else {
+                            // Jika Kesalahan berada pada password
+                            res.status(400).send({msg:"Password", accessToken : "-"});
+                        }
+                    }
+                });
+            }
+        });
+    } catch (error) {
+        res.status(500).send("Terjadi Kesalahan")
+    }
+});
+
 
 app.post("/add_user",  async (req,res) =>{
     try{
