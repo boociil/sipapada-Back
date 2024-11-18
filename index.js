@@ -102,6 +102,8 @@ app.get('/get_all_users', (req, res) => {
     });
 });
 
+
+
 // POST
 
 app.post("/add_user",  async (req,res) =>{
@@ -121,6 +123,32 @@ app.post("/add_user",  async (req,res) =>{
             res.status(201).send({
                 status: 201,
                 msg: "User berhasil ditambahkan",
+            });
+        });
+
+        
+    } catch(error){
+        // res.status(500).send("Terjadi Kesalahan")
+    }
+    
+})
+
+app.post("/delete_user",  async (req,res) =>{
+    try{
+        const { username} = req.body;
+
+        //Push ke db
+        const query = "DELETE FROM `users` WHERE username = ?;";
+
+        db.query(query, [username] , (err,results) => {
+            if (err){
+                res.status(404).send(err);
+                throw err;
+            }
+
+            res.status(200).send({
+                status: 200,
+                msg: "User berhasil dihapus",
             });
         });
 
