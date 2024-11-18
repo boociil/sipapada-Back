@@ -5,6 +5,8 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const path = require('path');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const port = 3000;
 
@@ -82,7 +84,7 @@ app.get('/get_all_users', (req, res) => {
 });
 
 app.get('/get_all_users', (req, res) => {
-    let query = "SELECT `username`, `role`, `dinas` FROM `users`";
+    let query = "SELECT `username`, `role`, `dinas` FROM `users` WHERE `role` != 0 ORDER BY `dinas` ASC;";
     
     db.query(query, (err, result) => {  // Ubah 'res' menjadi 'result'
         if (err) {
@@ -102,8 +104,35 @@ app.get('/get_all_users', (req, res) => {
 
 // POST
 
+app.post("/add_user",  async (req,res) =>{
+    try{
+        const { username, password, role,dinas } = req.body;
+        const hashedPass = await bcrypt.hash(password, 10);
+
+        //Push ke db
+        const query = "INSERT INTO `users`(`username`, `password`, `role`, `dinas`) VALUES (?,?,?,?)";
+
+        db.query(query, [username,hashedPass,role,dinas] , (err,results) => {
+            if (err){
+                res.status(403).send(err);
+                throw err;
+            }
+
+            res.status(201).send({
+                status: 201,
+                msg: "User berhasil ditambahkan",
+            });
+        });
+
+        
+    } catch(error){
+        // res.status(500).send("Terjadi Kesalahan")
+    }
+    
+})
+
 app.post('/input_instansi', (req, res) => {
-    const { nama, alamat } = req.body;
+    const { nama, alamat, alias } = req.body;
 
     // Validasi input
     if (req.body === undefined || req.body.nama === undefined || req.body.alamat === undefined) {
