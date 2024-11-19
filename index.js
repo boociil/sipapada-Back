@@ -113,16 +113,16 @@ app.post("/login", async (req,res) => {
         const { username, password } = req.body;
         
         const query = "SELECT username,password,role,dinas FROM `users` WHERE `username`= ?;";
+        
         db.query(query, [username] ,(err,results) =>{
             if (results.length === 0){
                 // Jika Kesalahan berada pada username
-                res.status(400).send({
+                res.status(200).send({
                     msg : "Username",
                     accessToken : "-",
                 });
             }else{
                 let hashed_pass = results[0].password;
-                
                 bcrypt.compare(password, hashed_pass, function(err,resultss){
                     if (err) {
                         // Kesalahan selama pembandingan
