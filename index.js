@@ -7,6 +7,9 @@ const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const fs = require('fs');
+// const upload = multer({ dest: 'uploads/' });
 
 const port = 3000;
 
@@ -16,6 +19,27 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true })); // Untuk form data seperti input text dalam form
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const uploadDir = './uploads';
+
+// Pastikan folder uploads ada
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
+
+// Konfigurasi penyimpanan file dengan multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // Menyimpan file ke folder 'uploads'
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    // File akan dinamakan dengan ID yang akan didapatkan setelah menyimpan data
+    cb(null, file.originalname);  // Ini sementara, kita akan mengganti nama nanti
+  }
+});
+
+const upload = multer({ storage: storage });
 
 // FUNGSI PENDUKUNG
 ///////////////////////////////////////////////////
@@ -215,34 +239,55 @@ app.post("/delete_user",  async (req,res) =>{
     
 })
 
-app.post('/input_instansi', (req, res) => {
-    const { nama, alamat, alias } = req.body;
-
-    // Validasi input
-    if (req.body === undefined || req.body.nama === undefined || req.body.alamat === undefined) {
-        return res.status(400).send({
-            msg: "Nama dan alamat harus diisi",
-        });
-    }
-
-    let query = "INSERT INTO dinas (nama, alamat) VALUES (?, ?)";
+app.post('/add_opd', upload.single('file'), (req, res) => {
+    const { nama, alias } = req.body;
     
-    db.query(query, [nama, alamat], (err, result) => {
+    // Validasi input
+    if (!nama || !alias || !req.file) {
+      return res.status(400).send({
+        msg: "Nama, alias, dan file harus diisi.",
+      });
+    }
+  
+    // Menyimpan data ke database terlebih dahulu untuk mendapatkan ID
+    let query = "INSERT INTO dinas (nama, alias) VALUES (?, ?)";
+    db.query(query, [nama, alias], (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send({
+          msg: "Gagal",
+          error: err.message,
+        });
+      }
+  
+      // Setelah data berhasil disimpan, dapatkan ID
+      const id = result.insertId;
+  
+      // Mengganti nama file dengan ID yang didapatkan dari database
+      const fileExtension = path.extname(req.file.originalname);  // Mengambil ekstensi file
+      const newFileName = `${id}${fileExtension}`;  // Nama file baru berdasarkan ID
+      const newFilePath = path.join(uploadDir, newFileName);
+  
+      // Mengganti nama file yang sudah disimpan di folder uploads
+      fs.rename(req.file.path, newFilePath, (err) => {
         if (err) {
-            console.error(err);  // Log error di server untuk debugging
-            return res.status(500).send({
-                msg: "Gagal",
-                error: err.message,  // Mengirimkan pesan error dari MySQL untuk lebih jelas
-            });
+          console.error('Gagal mengganti nama file:', err);
+          return res.status(500).send({
+            msg: 'Gagal mengganti nama file',
+          });
         }
 
+        // Setelah file berhasil diubah namanya, kirimkan response sukses
         res.status(201).send({
-            status: 201,
-            msg: "Instansi berhasil ditambahkan",
-            id: result.insertId,  // Anda bisa mengirimkan ID yang baru saja dimasukkan ke dalam tabel
+          status: 201,
+          msg: "Instansi berhasil ditambahkan",
+          id: id,  // Mengirimkan ID yang baru saja ditambahkan ke database
+          file: newFileName  // Mengirimkan nama file yang sudah diganti
         });
+      });
     });
 });
+
 
 app.post('/login', (req,res) => {
     const {username,password} = req.body;
