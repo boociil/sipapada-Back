@@ -60,6 +60,57 @@ function authenticateToken(req, res, next) {
     });
 }
 
+const generateSQL = (data, tableName, id) => {
+    let query = '';
+
+    
+    if (tableName === 'variabel_stat_keg') {
+        const { nama, konsep, definisi, referensi_waktu } = data;
+        
+        const filteredNama = Array.isArray(nama) ? nama.filter(item => item !== "") : [];
+        const filteredKonsep = Array.isArray(konsep) ? konsep.filter(item => item !== "") : [];
+        const filteredDefinisi = Array.isArray(definisi) ? definisi.filter(item => item !== "") : [];
+        const filteredReferensiWaktu = Array.isArray(referensi_waktu) ? referensi_waktu.filter(item => item !== "") : [];
+
+        if (filteredNama.length > 0) {
+            const values = [
+                `'${id}'`,
+                `'${filteredNama.join("', '")}'`,
+                `'${filteredKonsep.join("', '")}'`,
+                `'${filteredDefinisi.join("', '")}'`,
+                `'${filteredReferensiWaktu.join("', '")}'`
+            ];
+
+            query = `INSERT INTO ${tableName} (master_id, nama_variabel, konsep, definisi, referensi_waktu) VALUES (${values.join(', ')})`;
+        }
+    } else if (tableName === 'wilayah_kegiatan') {
+        const { prov, kabkot } = data;
+    
+        // Memfilter provinsi dan kabkot, menghapus nilai kosong
+        const filteredProv = Array.isArray(prov) ? prov.filter(item => item !== "") : [];
+        const filteredKabkot = Array.isArray(kabkot) ? kabkot.filter(item => item !== "") : [];
+    
+
+        // Memastikan panjang filteredProv dan filteredKabkot sama
+        if (filteredProv.length > 0 && filteredKabkot.length > 0) {
+            // Membuat array nilai untuk query
+            let values = [];
+    
+            // Membuat kombinasi antara provinsi dan kabkot
+            for (let i = 0; i < filteredProv.length; i++) {
+                values.push(`('${id}', '${filteredProv[i]}', '${filteredKabkot[i]}')`);
+            }
+    
+            // Membuat query INSERT dengan multiple VALUES
+            query = `INSERT INTO \`wilayah_kegiatan\`(\`master_id\`, \`provinsi\`, \`kabkot\`) VALUES ${values.join(', ')}`;
+        }
+    }
+
+    return query;
+};
+
+
+
 
 // BAGIAN API
 ///////////////////////////////////////////////////
@@ -254,7 +305,6 @@ app.post('/add_opd', upload.single('file'), (req, res) => {
     let query = "INSERT INTO dinas (nama, alias) VALUES (?, ?)";
     db.query(query, [nama, alias], (err, result) => {
       if (err) {
-        console.error(err);
         return res.status(500).send({
           msg: "Gagal",
           error: err.message,
@@ -272,7 +322,6 @@ app.post('/add_opd', upload.single('file'), (req, res) => {
       // Mengganti nama file yang sudah disimpan di folder uploads
       fs.rename(req.file.path, newFilePath, (err) => {
         if (err) {
-          console.error('Gagal mengganti nama file:', err);
           return res.status(500).send({
             msg: 'Gagal mengganti nama file',
           });
@@ -289,103 +338,124 @@ app.post('/add_opd', upload.single('file'), (req, res) => {
     });
 });
 
+app.post("/input_ms_keg", async (req, res) => {
 
-
-app.post("/input_ms_keg",  async (req,res) => {
     const query = `
-    INSERT INTO metadata_keg (
-      dinas_id, tahun, nama_kegiatan, kode_kegiatan, pj_eselon_1, pj_eselon_2, pj_eselon_3, jabatan_es_3, 
+        INSERT INTO metadata_keg (
+        dinas_id, tahun, nama_kegiatan, kode_kegiatan, pj_eselon_1, pj_eselon_2, pj_eselon_3, jabatan_es_3, 
+        alamat_es_3, telepon_es_3, email_es_3, faksimile_es_3, cara_pengumpulan, sektor_kegiatan, 
+        rekomendasi, id_rekomendasi, telepon_intansi, email_instansi, faksimile, latbel_kegiatan, 
+        tujuan_kegiatan, perencanaan_awal, perencanaan_akhir, desain_awal, desain_akhir, pengumpulan_awal, 
+        pengumpulan_akhir, pengolahan_awal, pengolahan_akhir, analisis_awal, analisis_akhir, diseminasi_awal, diseminasi_akhir,
+        evaluasi_awal, evaluasi_akhir, variabel_stat, kegiatan_dilakukan, jika_berulang, tipe_pengumpulan_data, 
+        cakupan_wilayah, wilayah_kegiatan, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
+        sarana_pengumpulan_lainnya, unit_pengumpulan, unit_pengumpulan_lainnya, rancangan_sampel, 
+        metode_pemiliahan_sampel_terakir, metode_sampel, kerangka_sampel_terakir, fraksi_sampel, sampling_error, 
+        unit_sampel, unit_observasi, uji_coba, metode_pemeriksaan_kualitas_data, 
+        metode_pemeriksaan_kualitas_data_lainnya, penyesuaian_non_respon, petugas_pengumpulan_data, 
+        persyaratan_pendidikan_terendah_petugas, jumlah_petugas, jumlah_supervisor, jumlah_pengumpul, 
+        pelatihan_petugas, penyuntingan, penyandian, data_entry, penyahihan, metode_analisis, 
+        unit_analisis, unit_analisis_lainnya, penyajian_analisis, penyajian_analisis_lainnya, cetak, digital, 
+        data_mikro
+        ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        );
+    `;
+
+    const {dinas_id, tahun, nama_kegiatan, kode_kegiatan, pj_eselon_1, pj_eselon_2, pj_eselon_3, jabatan_es_3, 
       alamat_es_3, telepon_es_3, email_es_3, faksimile_es_3, cara_pengumpulan, sektor_kegiatan, 
-      rekomendasi, id_rekomendasi, telepon_intansi, email_instansi, faksimile, latbel_kegiatan, 
-      tujuan_kegiatan, perencanaan_awal, perencanaan_akhir, desain_awal, desain_akhir, pengumpulan_awal, 
-      pengumpulan_akhir, pengolahan_awal, pengolahan_akhir, analisis_awal, analisis_akhir, diseminasi_awal, diseminasi_akhir,
+      rekomendasi, id_rekomendasi, telepon_intansi, email_instansi, faksimile, 
+      latbel_kegiatan, tujuan_kegiatan, perencanaan_awal, perencanaan_akhir, desain_awal, desain_akhir, pengumpulan_awal, 
+      pengumpulan_akhir, pengolahan_awal, pengolahan_akhir, analisis_awal, analisis_akhir, diseminasi_awal, diseminasi_akhir, 
       evaluasi_awal, evaluasi_akhir, variabel_stat, kegiatan_dilakukan, jika_berulang, tipe_pengumpulan_data, 
       cakupan_wilayah, wilayah_kegiatan, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
-      sarana_pengumpulan_lainnya, unit_pengumpulan, unit_pengumpulan_lainnya, rancangan_sampel, 
-      metode_pemiliahan_sampel_terakir, metode_sampel, kerangka_sampel_terakir, fraksi_sampel, sampling_error, 
+      sarana_pengumpulan_lainnya, unit_pengumpulan, unit_pengumpulan_lainnya, 
+      rancangan_sampel, metode_pemiliahan_sampel_terakir, metode_sampel, kerangka_sampel_terakir, fraksi_sampel, sampling_error, 
       unit_sampel, unit_observasi, uji_coba, metode_pemeriksaan_kualitas_data, 
       metode_pemeriksaan_kualitas_data_lainnya, penyesuaian_non_respon, petugas_pengumpulan_data, 
-      persyaratan_pendidikan_terendah_petugas, jumlah_petugas, jumlah_supervisor, jumlah_pengumpul, 
-      pelatihan_petugas, penyuntingan, penyandian, data_entry, penyahihan, metode_analisis, 
-      unit_analisis, unit_analisis_lainnya, penyajian_analisis, penyajian_analisis_lainnya, cetak, digital, 
-      data_mikro
-    ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-    );
-  `;
-
-  const {dinas_id, tahun, nama_kegiatan, kode_kegiatan, pj_eselon_1, pj_eselon_2, pj_eselon_3, jabatan_es_3, 
-    alamat_es_3, telepon_es_3, email_es_3, faksimile_es_3, cara_pengumpulan, sektor_kegiatan, 
-    rekomendasi, id_rekomendasi, telepon_intansi, email_instansi, faksimile, 
-    // BAB III
-    latbel_kegiatan, tujuan_kegiatan, perencanaan_awal, perencanaan_akhir, desain_awal, desain_akhir, pengumpulan_awal, 
-    pengumpulan_akhir, pengolahan_awal, pengolahan_akhir, analisis_awal, analisis_akhir, diseminasi_awal, diseminasi_akhir, 
-    evaluasi_awal, evaluasi_akhir, variabel_stat, 
-    // BAB IV
-    kegiatan_dilakukan, jika_berulang, tipe_pengumpulan_data, 
-    cakupan_wilayah, wilayah_kegiatan, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
-    sarana_pengumpulan_lainnya, unit_pengumpulan, unit_pengumpulan_lainnya, 
-    // BAB V
-    rancangan_sampel, metode_pemiliahan_sampel_terakir, metode_sampel, kerangka_sampel_terakir, fraksi_sampel, sampling_error, 
-    unit_sampel, unit_observasi, 
-    // BAB VI
-    uji_coba, metode_pemeriksaan_kualitas_data, 
-    metode_pemeriksaan_kualitas_data_lainnya, penyesuaian_non_respon, petugas_pengumpulan_data, 
-    persyaratan_pendidikan_terendah_petugas, jumlah_supervisor, jumlah_pengumpul, pelatihan_petugas,
-    // BAB VII
-    penyuntingan, penyandian, data_entry, penyahihan, metode_analisis, 
-    unit_analisis, unit_analisis_lainnya, penyajian_analisis, penyajian_analisis_lainnya, 
-    // BAB VIII
-    cetak, digital, 
-    data_mikro
-    } = req.body
-
-    const jumlah_petugas = jumlah_pengumpul + jumlah_supervisor
-
-    console.log(req.body);
-    
+      persyaratan_pendidikan_terendah_petugas, jumlah_supervisor, jumlah_pengumpul, pelatihan_petugas,
+      penyuntingan, penyandian, data_entry, penyahihan, metode_analisis, 
+      unit_analisis, unit_analisis_lainnya, penyajian_analisis, penyajian_analisis_lainnya, 
+      cetak, digital, data_mikro
+    } = req.body;
   
-    // ALUR!!!
-    // baca req.body -> query tabel keg -> query tabel varstat -> query tabel wilkeg
+    
 
-  db.query(query, [
-    dinas_id, tahun, nama_kegiatan, kode_kegiatan, pj_eselon_1, pj_eselon_2, pj_eselon_3, jabatan_es_3, 
-    alamat_es_3, telepon_es_3, email_es_3, faksimile_es_3, cara_pengumpulan, sektor_kegiatan, 
-    rekomendasi, id_rekomendasi, telepon_intansi, email_instansi, faksimile, 
-    latbel_kegiatan, tujuan_kegiatan, perencanaan_awal, perencanaan_akhir, desain_awal, desain_akhir, pengumpulan_awal, 
-    pengumpulan_akhir, pengolahan_awal, pengolahan_akhir, analisis_awal, analisis_akhir, diseminasi_awal, diseminasi_akhir, 
-    evaluasi_awal, evaluasi_akhir, variabel_stat, 
-    kegiatan_dilakukan, jika_berulang, tipe_pengumpulan_data, 
-    cakupan_wilayah, wilayah_kegiatan, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
-    sarana_pengumpulan_lainnya, unit_pengumpulan, unit_pengumpulan_lainnya, 
-    rancangan_sampel, metode_pemiliahan_sampel_terakir, metode_sampel, kerangka_sampel_terakir, fraksi_sampel, sampling_error, 
-    unit_sampel, unit_observasi, 
-    uji_coba, metode_pemeriksaan_kualitas_data, 
-    metode_pemeriksaan_kualitas_data_lainnya, penyesuaian_non_respon, petugas_pengumpulan_data, 
-    persyaratan_pendidikan_terendah_petugas, jumlah_petugas, jumlah_supervisor, jumlah_pengumpul, pelatihan_petugas,
-    penyuntingan, penyandian, data_entry, penyahihan, metode_analisis, 
-    unit_analisis, unit_analisis_lainnya, penyajian_analisis, penyajian_analisis_lainnya, 
-    cetak, digital, 
-    data_mikro,
-  ], (err,result) => {
-    if (err) {
-        console.log("error BE", err);
-        
-        res.status(500).send({
-            msg: "Failed",
+    const jumlah_petugas = jumlah_pengumpul + jumlah_supervisor;
+    const data_variabel_stat = JSON.parse(req.body.variabel_stat);
+    const data_wilayah_kegiatan = JSON.parse(req.body.wilayah_kegiatan);
+  
+    try {
+      // Menjalankan query pertama (INSERT INTO metadata_keg)
+      const result = await new Promise((resolve, reject) => {
+        db.query(query, [
+            dinas_id, tahun, nama_kegiatan, kode_kegiatan, pj_eselon_1, pj_eselon_2, pj_eselon_3, jabatan_es_3, 
+            alamat_es_3, telepon_es_3, email_es_3, faksimile_es_3, cara_pengumpulan, sektor_kegiatan, 
+            rekomendasi, id_rekomendasi, telepon_intansi, email_instansi, faksimile, 
+            latbel_kegiatan, tujuan_kegiatan, perencanaan_awal, perencanaan_akhir, desain_awal, desain_akhir, pengumpulan_awal, 
+            pengumpulan_akhir, pengolahan_awal, pengolahan_akhir, analisis_awal, analisis_akhir, diseminasi_awal, diseminasi_akhir, 
+            evaluasi_awal, evaluasi_akhir, variabel_stat, 
+            kegiatan_dilakukan, jika_berulang, tipe_pengumpulan_data, 
+            cakupan_wilayah, wilayah_kegiatan, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
+            sarana_pengumpulan_lainnya, unit_pengumpulan, unit_pengumpulan_lainnya, 
+            rancangan_sampel, metode_pemiliahan_sampel_terakir, metode_sampel, kerangka_sampel_terakir, fraksi_sampel, sampling_error, 
+            unit_sampel, unit_observasi, 
+            uji_coba, metode_pemeriksaan_kualitas_data, 
+            metode_pemeriksaan_kualitas_data_lainnya, penyesuaian_non_respon, petugas_pengumpulan_data, 
+            persyaratan_pendidikan_terendah_petugas, jumlah_petugas, jumlah_supervisor, jumlah_pengumpul, pelatihan_petugas,
+            penyuntingan, penyandian, data_entry, penyahihan, metode_analisis, 
+            unit_analisis, unit_analisis_lainnya, penyajian_analisis, penyajian_analisis_lainnya, 
+            cetak, digital, 
+            data_mikro,
+        ], (err, result) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+          }
         });
-        return;  // Tambahkan return agar eksekusi berhenti setelah error
-    }
-    console.log("ga error BE");
-    res.status(201).send({
+      });
+  
+      const resId = result.insertId; // ID dari query pertama
+      const query_varstat = generateSQL(data_variabel_stat, "variabel_stat_keg", resId); // Menggunakan ID untuk query berikutnya
+      const query_wilkeg = generateSQL(data_wilayah_kegiatan, "wilayah_kegiatan", resId); // Menggunakan ID untuk query berikutnya
+  
+      // Eksekusi query kedua dan ketiga jika diperlukan
+      await new Promise((resolve, reject) => {
+        db.query(query_varstat, (err, result) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+          }
+        });
+      });
+  
+      await new Promise((resolve, reject) => {
+        db.query(query_wilkeg, (err, result) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+          }
+        });
+      });
+  
+      // Menyelesaikan response jika semua query berhasil
+      res.status(201).send({
         status: 201,
         msg: "Success",
-      })
-  })
-});
+        id: resId,
+      });
 
-
+    } catch (err) {
+      res.status(500).send({
+        msg: "Failed",
+      });
+    }
+  });
+  
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
