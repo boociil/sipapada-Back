@@ -177,6 +177,72 @@ app.get('/get_all_users', (req, res) => {
     });
 });
 
+app.get('/get_stat_ind/:id', (req, res) => {
+
+  const id = req.params.id
+
+    let query = "SELECT * FROM `metadata_ind` WHERE master_id = ?;";
+    
+    db.query(query, [id], (err, result) => {  // Ubah 'res' menjadi 'result'
+        if (err) {
+            res.status(500).send({
+                status:500,
+                msg: "Failed",
+            });
+            return;  // Tambahkan return agar eksekusi berhenti setelah error
+        }
+        
+        res.status(200).send({
+            status : 200,
+            msg: result,  // Gunakan 'result' untuk mengirim hasil query
+        });
+    });
+});
+
+app.get('/get_stat_var/:id', (req, res) => {
+
+  const id = req.params.id
+
+    let query = "SELECT * FROM `metadata_var` WHERE master_id = ?;";
+    
+    db.query(query, [id], (err, result) => {  // Ubah 'res' menjadi 'result'
+        if (err) {
+            res.status(500).send({
+                status:500,
+                msg: "Failed",
+            });
+            return;  // Tambahkan return agar eksekusi berhenti setelah error
+        }
+        
+        res.status(200).send({
+            status : 200,
+            msg: result,  // Gunakan 'result' untuk mengirim hasil query
+        });
+    });
+});
+
+app.get('/get_keg/:id', (req, res) => {
+
+  const id = req.params.id
+
+    let query = "SELECT metadata_keg.tahun, metadata_keg.nama_kegiatan, metadata_keg.kode_kegiatan, dinas.Alias FROM `metadata_keg` INNER JOIN dinas ON metadata_keg.dinas_id = dinas.id WHERE dinas_id = ?;";
+    
+    db.query(query, [id], (err, result) => {  // Ubah 'res' menjadi 'result'
+        if (err) {
+            res.status(500).send({
+                status:500,
+                msg: "Failed",
+            });
+            return;  // Tambahkan return agar eksekusi berhenti setelah error
+        }
+        
+        res.status(200).send({
+            status : 200,
+            msg: result,  // Gunakan 'result' untuk mengirim hasil query
+        });
+    });
+});
+
 
 
 // POST
@@ -347,8 +413,8 @@ app.post("/input_ms_keg", async (req, res) => {
         rekomendasi, id_rekomendasi, telepon_intansi, email_instansi, faksimile, latbel_kegiatan, 
         tujuan_kegiatan, perencanaan_awal, perencanaan_akhir, desain_awal, desain_akhir, pengumpulan_awal, 
         pengumpulan_akhir, pengolahan_awal, pengolahan_akhir, analisis_awal, analisis_akhir, diseminasi_awal, diseminasi_akhir,
-        evaluasi_awal, evaluasi_akhir, variabel_stat, kegiatan_dilakukan, jika_berulang, tipe_pengumpulan_data, 
-        cakupan_wilayah, wilayah_kegiatan, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
+        evaluasi_awal, evaluasi_akhir, kegiatan_dilakukan, jika_berulang, tipe_pengumpulan_data, 
+        cakupan_wilayah, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
         sarana_pengumpulan_lainnya, unit_pengumpulan, unit_pengumpulan_lainnya, rancangan_sampel, 
         metode_pemiliahan_sampel_terakir, metode_sampel, kerangka_sampel_terakir, fraksi_sampel, sampling_error, 
         unit_sampel, unit_observasi, uji_coba, metode_pemeriksaan_kualitas_data, 
@@ -359,7 +425,7 @@ app.post("/input_ms_keg", async (req, res) => {
         data_mikro
         ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         );
     `;
 
@@ -368,8 +434,8 @@ app.post("/input_ms_keg", async (req, res) => {
       rekomendasi, id_rekomendasi, telepon_intansi, email_instansi, faksimile, 
       latbel_kegiatan, tujuan_kegiatan, perencanaan_awal, perencanaan_akhir, desain_awal, desain_akhir, pengumpulan_awal, 
       pengumpulan_akhir, pengolahan_awal, pengolahan_akhir, analisis_awal, analisis_akhir, diseminasi_awal, diseminasi_akhir, 
-      evaluasi_awal, evaluasi_akhir, variabel_stat, kegiatan_dilakukan, jika_berulang, tipe_pengumpulan_data, 
-      cakupan_wilayah, wilayah_kegiatan, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
+      evaluasi_awal, evaluasi_akhir, kegiatan_dilakukan, jika_berulang, tipe_pengumpulan_data, 
+      cakupan_wilayah, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
       sarana_pengumpulan_lainnya, unit_pengumpulan, unit_pengumpulan_lainnya, 
       rancangan_sampel, metode_pemiliahan_sampel_terakir, metode_sampel, kerangka_sampel_terakir, fraksi_sampel, sampling_error, 
       unit_sampel, unit_observasi, uji_coba, metode_pemeriksaan_kualitas_data, 
@@ -395,9 +461,9 @@ app.post("/input_ms_keg", async (req, res) => {
             rekomendasi, id_rekomendasi, telepon_intansi, email_instansi, faksimile, 
             latbel_kegiatan, tujuan_kegiatan, perencanaan_awal, perencanaan_akhir, desain_awal, desain_akhir, pengumpulan_awal, 
             pengumpulan_akhir, pengolahan_awal, pengolahan_akhir, analisis_awal, analisis_akhir, diseminasi_awal, diseminasi_akhir, 
-            evaluasi_awal, evaluasi_akhir, variabel_stat, 
+            evaluasi_awal, evaluasi_akhir, 
             kegiatan_dilakukan, jika_berulang, tipe_pengumpulan_data, 
-            cakupan_wilayah, wilayah_kegiatan, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
+            cakupan_wilayah, metode_pengumpulan, metode_pengumpulan_lainnya, sarana_pengumpulan, 
             sarana_pengumpulan_lainnya, unit_pengumpulan, unit_pengumpulan_lainnya, 
             rancangan_sampel, metode_pemiliahan_sampel_terakir, metode_sampel, kerangka_sampel_terakir, fraksi_sampel, sampling_error, 
             unit_sampel, unit_observasi, 
@@ -420,7 +486,8 @@ app.post("/input_ms_keg", async (req, res) => {
       const resId = result.insertId; // ID dari query pertama
       const query_varstat = generateSQL(data_variabel_stat, "variabel_stat_keg", resId); // Menggunakan ID untuk query berikutnya
       const query_wilkeg = generateSQL(data_wilayah_kegiatan, "wilayah_kegiatan", resId); // Menggunakan ID untuk query berikutnya
-  
+      
+
       // Eksekusi query kedua dan ketiga jika diperlukan
       await new Promise((resolve, reject) => {
         db.query(query_varstat, (err, result) => {
