@@ -221,6 +221,28 @@ app.get('/get_stat_var/:id', (req, res) => {
     });
 });
 
+app.get('/get_info_opd/:id', (req, res) => {
+
+  const id = req.params.id
+
+    let query = "SELECT * FROM `dinas` WHERE id = ?;";
+    
+    db.query(query, [id], (err, result) => {  // Ubah 'res' menjadi 'result'
+        if (err) {
+            res.status(500).send({
+                status:500,
+                msg: "Failed",
+            });
+            return;  // Tambahkan return agar eksekusi berhenti setelah error
+        }
+        
+        res.status(200).send({
+            status : 200,
+            msg: result,  // Gunakan 'result' untuk mengirim hasil query
+        });
+    });
+});
+
 app.get('/get_keg/:id', (req, res) => {
 
   const id = req.params.id
