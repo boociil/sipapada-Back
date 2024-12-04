@@ -379,6 +379,28 @@ app.post("/delete_user",  async (req,res) =>{
     
 })
 
+app.post('/input_ms_var', upload.single('file'), (req, res) => {
+    
+    const { master_id, nama, alias, konsep, definisi, referensi_pemilihan, referensi_waktu, tipe_data, klasifikasi_isian, aturan_validasi, kalimat_pertanyaan, akses_umum } = req.body;
+  
+    // Menyimpan data ke database terlebih dahulu untuk mendapatkan ID
+    let query = "INSERT INTO `metadata_var`( `master_id`, `nama_variabel`, `alias`, `definisi_var`, `konsep`, `referensi_pemilihan`, `referensi_waktu`, `tipe_data`, `klasifikasi_isian`, `aturan_validasi`, `kalimat_pertanyaan`, `akses_umum`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+    db.query(query, [master_id, nama, alias, konsep, definisi, referensi_pemilihan, referensi_waktu, tipe_data, klasifikasi_isian, aturan_validasi, kalimat_pertanyaan, akses_umum], (err, result) => {
+      if (err) {
+        return res.status(500).send({
+          msg: "Gagal",
+          error: err.message,
+        });
+      }
+
+        res.status(201).send({
+          status: 201,
+          id: master_id,
+          msg: "Variabel berhasil ditambahkan",
+        });
+      });
+});
+
 app.post('/add_opd', upload.single('file'), (req, res) => {
     const { nama, alias } = req.body;
     
