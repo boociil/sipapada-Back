@@ -379,13 +379,37 @@ app.post("/delete_user",  async (req,res) =>{
     
 })
 
-app.post('/input_ms_var', upload.single('file'), (req, res) => {
+app.post('/input_ms_var', (req, res) => {
     
     const { master_id, nama, alias, konsep, definisi, referensi_pemilihan, referensi_waktu, tipe_data, klasifikasi_isian, aturan_validasi, kalimat_pertanyaan, akses_umum } = req.body;
   
     // Menyimpan data ke database terlebih dahulu untuk mendapatkan ID
     let query = "INSERT INTO `metadata_var`( `master_id`, `nama_variabel`, `alias`, `definisi_var`, `konsep`, `referensi_pemilihan`, `referensi_waktu`, `tipe_data`, `klasifikasi_isian`, `aturan_validasi`, `kalimat_pertanyaan`, `akses_umum`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
     db.query(query, [master_id, nama, alias, konsep, definisi, referensi_pemilihan, referensi_waktu, tipe_data, klasifikasi_isian, aturan_validasi, kalimat_pertanyaan, akses_umum], (err, result) => {
+      if (err) {
+        return res.status(500).send({
+          msg: "Gagal",
+          error: err.message,
+        });
+      }
+
+        res.status(201).send({
+          status: 201,
+          id: master_id,
+          msg: "Variabel berhasil ditambahkan",
+        });
+      });
+});
+
+app.post('/input_ms_ind', (req, res) => {
+    
+    const { master_id,nama,konsep,definisi,interpretasi,rumus,ukuran,satuan,klasifikasi_penyajian,ind_komposit,komp_publikasi,komp_nama,kegiatan_penghasil,kode_keg,nama_var_pembangunan,level_estimasi,diakses_umum, } = req.body;
+
+    console.log(req.body);
+
+    // Menyimpan data ke database terlebih dahulu untuk mendapatkan ID
+    let query = "INSERT INTO `metadata_ind`(`master_id`, `nama_indikator`, `konsep`, `definisi`, `interpretasi`, `metode_rumus`, `ukuran`, `satuan`, `klasifikasi_penyajian`, `indikator_komposit`, `publikasi_ketersediaan`, `nama_indikator_pembangunan`, `kegiatan_penghasil`, `kode_keg`, `nama_var_pembangunan`, `level_estimasi`, `akses_umum`) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    db.query(query, [master_id,nama,konsep,definisi,interpretasi,rumus,ukuran,satuan,klasifikasi_penyajian,ind_komposit,komp_publikasi,komp_nama,kegiatan_penghasil,kode_keg,nama_var_pembangunan,level_estimasi,diakses_umum], (err, result) => {
       if (err) {
         return res.status(500).send({
           msg: "Gagal",
