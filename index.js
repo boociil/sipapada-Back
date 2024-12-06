@@ -247,7 +247,105 @@ app.get('/get_keg/:id', (req, res) => {
 
   const id = req.params.id
 
-    let query = "SELECT metadata_keg.tahun, metadata_keg.nama_kegiatan, metadata_keg.kode_kegiatan, dinas.Alias FROM `metadata_keg` INNER JOIN dinas ON metadata_keg.dinas_id = dinas.id WHERE dinas_id = ?;";
+    let query = "SELECT metadata_keg.id, metadata_keg.tahun, metadata_keg.nama_kegiatan, metadata_keg.kode_kegiatan, dinas.Alias FROM `metadata_keg` INNER JOIN dinas ON metadata_keg.dinas_id = dinas.id WHERE dinas_id = ?;";
+    
+    db.query(query, [id], (err, result) => {  // Ubah 'res' menjadi 'result'
+        if (err) {
+            res.status(500).send({
+                status:500,
+                msg: "Failed",
+            });
+            return;  // Tambahkan return agar eksekusi berhenti setelah error
+        }
+        
+        res.status(200).send({
+            status : 200,
+            msg: result,  // Gunakan 'result' untuk mengirim hasil query
+        });
+    });
+});
+
+app.get('/del_keg/:id', (req, res) => {
+  const id = req.params.id;
+
+  const query3 = "DELETE FROM `metadata_keg` WHERE id = ?;";
+  const query2 = "DELETE FROM `metadata_ind` WHERE master_id = ?;";
+  const query1 = "DELETE FROM `metadata_var` WHERE master_id = ?;";
+
+  // Eksekusi query pertama
+  db.query(query1, [id], (err, result1) => {
+    if (err) {
+      res.status(500).send({
+        status: 500,
+        err: err,
+        msg: "Failed on metadata_var",
+      });
+      return;
+    }
+
+    // Eksekusi query kedua
+    db.query(query2, [id], (err, result2) => {
+      if (err) {
+        res.status(500).send({
+          status: 500,
+          msg: "Failed on metadata_ind",
+        });
+        return;
+      }
+
+      // Eksekusi query ketiga
+      db.query(query3, [id], (err, result3) => {
+        if (err) {
+          res.status(500).send({
+            status: 500,
+            msg: "Failed on metadata_keg",
+          });
+          return;
+        }
+
+        // Semua query berhasil
+        res.status(200).send({
+          status: 200,
+          msg: "All records deleted successfully",
+          details: {
+            metadata_keg: result1,
+            metadata_ind: result2,
+            metadata_var: result3,
+          },
+        });
+      });
+    });
+  });
+});
+
+
+
+app.get('/del_var/:id', (req, res) => {
+
+  const id = req.params.id
+
+    let query = "DELETE FROM `metadata_var` WHERE id = ?;";
+    
+    db.query(query, [id], (err, result) => {  // Ubah 'res' menjadi 'result'
+        if (err) {
+            res.status(500).send({
+                status:500,
+                msg: "Failed",
+            });
+            return;  // Tambahkan return agar eksekusi berhenti setelah error
+        }
+        
+        res.status(200).send({
+            status : 200,
+            msg: result,  // Gunakan 'result' untuk mengirim hasil query
+        });
+    });
+});
+app.get('/del_ind/:id', (req, res) => {
+
+  const id = req.params.id
+
+    let query = "DELETE FROM `metadata_ind` WHERE id = ?;";
     
     db.query(query, [id], (err, result) => {  // Ubah 'res' menjadi 'result'
         if (err) {
@@ -404,8 +502,6 @@ app.post('/input_ms_var', (req, res) => {
 app.post('/input_ms_ind', (req, res) => {
     
     const { master_id,nama,konsep,definisi,interpretasi,rumus,ukuran,satuan,klasifikasi_penyajian,ind_komposit,komp_publikasi,komp_nama,kegiatan_penghasil,kode_keg,nama_var_pembangunan,level_estimasi,diakses_umum, } = req.body;
-
-    console.log(req.body);
 
     // Menyimpan data ke database terlebih dahulu untuk mendapatkan ID
     let query = "INSERT INTO `metadata_ind`(`master_id`, `nama_indikator`, `konsep`, `definisi`, `interpretasi`, `metode_rumus`, `ukuran`, `satuan`, `klasifikasi_penyajian`, `indikator_komposit`, `publikasi_ketersediaan`, `nama_indikator_pembangunan`, `kegiatan_penghasil`, `kode_keg`, `nama_var_pembangunan`, `level_estimasi`, `akses_umum`) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
